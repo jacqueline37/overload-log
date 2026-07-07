@@ -80,6 +80,7 @@
   }
   .chip.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
   .chip.add { color: var(--gold); border-color: var(--gold-dim); display: flex; align-items: center; gap: 4px; }
+  .chip:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
 
   .card {
     background: var(--surface);
@@ -201,8 +202,22 @@
     100% { transform: rotate(-6deg) scale(1); }
   }
 
-  .del-btn { background: none; border: none; color: var(--ink-dim); cursor: pointer; padding: 2px; font-size: 15px; line-height: 1; }
+  .del-btn {
+    background: none;
+    border: none;
+    color: var(--ink-dim);
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+  }
   .del-btn:hover { color: #d9694f; }
+  .del-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
 
   .empty { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--ink-dim); padding: 20px 0; text-align: center; }
 
@@ -321,15 +336,28 @@ function renderChips() {
     const chip = document.createElement("div");
     chip.className = "chip" + (ex === selectedExercise ? " active" : "");
     chip.textContent = ex;
+    chip.setAttribute("role", "button");
+    chip.setAttribute("tabindex", "0");
+    chip.setAttribute("aria-pressed", ex === selectedExercise ? "true" : "false");
     chip.onclick = () => { selectedExercise = ex; render(); };
+    chip.onkeydown = (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectedExercise = ex; render(); }
+    };
     chipsEl.appendChild(chip);
   });
   const addChip = document.createElement("div");
   addChip.className = "chip add";
   addChip.textContent = "+ 種目";
-  addChip.onclick = () => {
+  addChip.setAttribute("role", "button");
+  addChip.setAttribute("tabindex", "0");
+  addChip.setAttribute("aria-label", "新しい種目を追加");
+  const toggleExerciseInput = () => {
     const row = document.getElementById("exerciseInputRow");
     row.style.display = row.style.display === "flex" ? "none" : "flex";
+  };
+  addChip.onclick = toggleExerciseInput;
+  addChip.onkeydown = (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleExerciseInput(); }
   };
   chipsEl.appendChild(addChip);
 }
@@ -367,7 +395,7 @@ function renderHistory() {
       </div>
       <div class="row-actions">
         ${e.isPR ? `<span class="stamp${justAddedId === e.id ? ' pop' : ''}">🏆 PR</span>` : ""}
-        <button class="del-btn" data-id="${e.id}">✕</button>
+        <button class="del-btn" data-id="${e.id}" aria-label="${formatDate(e.date)}の記録を削除">✕</button>
       </div>
     `;
     row.querySelector(".del-btn").onclick = () => {
