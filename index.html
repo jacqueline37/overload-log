@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>更新ログ | Progressive Overload Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #17161a;
+    --surface: #211f24;
+    --surface-2: #29262c;
+    --line: #38343c;
+    --ink: #eeece8;
+    --ink-dim: #8f8a92;
+    --gold: #c9a227;
+    --gold-dim: #8a7420;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px 16px 40px;
+  }
+  .wrap { max-width: 520px; margin: 0 auto; }
+
+  .header { margin-bottom: 20px; }
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+  h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    margin: 4px 0 0;
+  }
+
+  .chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 16px;
+  }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: 0 0 auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink-dim);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+  }
+  .chip.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .chip.add { color: var(--gold); border-color: var(--gold-dim); display: flex; align-items: center; gap: 4px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .best-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .best-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .best-value {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--gold);
+  }
+  .best-value .unit { font-size: 13px; color: var(--ink-dim); margin-left: 3px; }
+  .best-empty { font-size: 14px; color: var(--ink-dim); font-family: 'IBM Plex Mono', monospace; }
+
+  .form-grid { display: grid; grid-template-columns: 1.2fr 1fr 0.8fr; gap: 8px; margin-bottom: 10px; }
+  .field label {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-dim);
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+  .field input {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--ink);
+    font-family: 'Oswald', sans-serif;
+    font-size: 20px;
+    padding: 8px;
+    text-align: center;
+  }
+  .field input:focus { outline: none; border-color: var(--gold-dim); }
+
+  .date-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .date-row input {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--ink-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 6px 8px;
+  }
+
+  .add-btn {
+    width: 100%;
+    background: var(--ink);
+    color: var(--bg);
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+  }
+  .add-btn:active { transform: scale(0.98); }
+
+  .error { color: #d9694f; font-family: 'IBM Plex Mono', monospace; font-size: 12px; margin-bottom: 8px; display: none; }
+
+  .history-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 4px 0 10px;
+  }
+
+  .row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: none; }
+  .row-left { display: flex; align-items: baseline; gap: 10px; }
+  .row-date { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-dim); width: 34px; }
+  .row-main { font-family: 'Oswald', sans-serif; font-size: 16px; }
+  .row-sets { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-dim); }
+  .row-actions { display: flex; align-items: center; gap: 10px; }
+
+  .stamp {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--gold);
+    border: 1px solid var(--gold-dim);
+    border-radius: 4px;
+    padding: 2px 6px;
+    letter-spacing: 0.05em;
+    transform: rotate(-6deg);
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .stamp.pop { animation: stampPop 0.4s ease-out; }
+  @keyframes stampPop {
+    0% { transform: rotate(-6deg) scale(1.6); opacity: 0; }
+    60% { transform: rotate(-6deg) scale(0.95); opacity: 1; }
+    100% { transform: rotate(-6deg) scale(1); }
+  }
+
+  .del-btn { background: none; border: none; color: var(--ink-dim); cursor: pointer; padding: 2px; font-size: 15px; line-height: 1; }
+  .del-btn:hover { color: #d9694f; }
+
+  .empty { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--ink-dim); padding: 20px 0; text-align: center; }
+
+  .exercise-input-row { display: none; gap: 6px; margin-bottom: 10px; }
+  .exercise-input-row input {
+    flex: 1;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    padding: 8px 10px;
+  }
+  .exercise-input-row button {
+    background: var(--gold);
+    color: var(--bg);
+    border: none;
+    border-radius: 6px;
+    padding: 0 14px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="eyebrow">progressive overload tracker</div>
+    <h1>更新ログ</h1>
+  </div>
+
+  <div class="chips" id="chips"></div>
+  <div class="exercise-input-row" id="exerciseInputRow">
+    <input type="text" id="newExerciseName" placeholder="種目名を入力">
+    <button id="addExerciseBtn">追加</button>
+  </div>
+
+  <div class="card">
+    <div class="best-row">
+      <div class="best-label" id="bestLabel">自己ベスト</div>
+      <div class="best-value" id="bestValue"><span class="best-empty">まだ記録なし</span></div>
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label>重量 (kg)</label>
+        <input type="number" inputmode="decimal" id="weightInput" placeholder="0">
+      </div>
+      <div class="field">
+        <label>回数</label>
+        <input type="number" inputmode="numeric" id="repsInput" placeholder="0">
+      </div>
+      <div class="field">
+        <label>セット</label>
+        <input type="number" inputmode="numeric" id="setsInput" value="3">
+      </div>
+    </div>
+
+    <div class="date-row">
+      <input type="date" id="dateInput">
+    </div>
+
+    <div class="error" id="errorMsg"></div>
+
+    <button class="add-btn" id="addBtn">+ 記録する</button>
+  </div>
+
+  <div class="card">
+    <div class="history-label">履歴</div>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_EXERCISES = [
+  "スクワット", "ベンチプレス", "デッドリフト", "ショルダープレス",
+  "懸垂/ラットプル", "シーテッドロー", "レッグプレス", "インクラインプレス"
+];
+const ENTRIES_KEY = "overload-log-entries";
+const EXERCISES_KEY = "overload-log-exercises";
+
+let exercises = JSON.parse(localStorage.getItem(EXERCISES_KEY) || "null") || DEFAULT_EXERCISES;
+let entries = JSON.parse(localStorage.getItem(ENTRIES_KEY) || "null") || [];
+let selectedExercise = exercises[0];
+let justAddedId = null;
+
+function epley(weight, reps) {
+  const w = parseFloat(weight), r = parseFloat(reps);
+  if (!w || !r) return 0;
+  return w * (1 + r / 30);
+}
+function todayStr() {
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+function formatDate(dateStr) {
+  const d = new Date(dateStr + "T00:00:00");
+  return (d.getMonth() + 1) + "/" + d.getDate();
+}
+function saveEntries() { localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries)); }
+function saveExercises() { localStorage.setItem(EXERCISES_KEY, JSON.stringify(exercises)); }
+
+function bestEpleyBefore(exerciseName) {
+  const past = entries.filter(e => e.exercise === exerciseName);
+  if (past.length === 0) return 0;
+  return Math.max(...past.map(e => epley(e.weight, e.reps)));
+}
+
+function renderChips() {
+  const chipsEl = document.getElementById("chips");
+  chipsEl.innerHTML = "";
+  exercises.forEach(ex => {
+    const chip = document.createElement("div");
+    chip.className = "chip" + (ex === selectedExercise ? " active" : "");
+    chip.textContent = ex;
+    chip.onclick = () => { selectedExercise = ex; render(); };
+    chipsEl.appendChild(chip);
+  });
+  const addChip = document.createElement("div");
+  addChip.className = "chip add";
+  addChip.textContent = "+ 種目";
+  addChip.onclick = () => {
+    const row = document.getElementById("exerciseInputRow");
+    row.style.display = row.style.display === "flex" ? "none" : "flex";
+  };
+  chipsEl.appendChild(addChip);
+}
+
+function renderBest() {
+  document.getElementById("bestLabel").textContent = "自己ベスト (" + selectedExercise + ")";
+  const history = entries.filter(e => e.exercise === selectedExercise);
+  const bestVal = document.getElementById("bestValue");
+  if (history.length === 0) {
+    bestVal.innerHTML = '<span class="best-empty">まだ記録なし</span>';
+    return;
+  }
+  const bestE = Math.max(...history.map(e => epley(e.weight, e.reps)));
+  const bestEntry = history.find(e => epley(e.weight, e.reps) === bestE);
+  bestVal.innerHTML = bestEntry.weight + '<span class="unit">kg</span> × ' + bestEntry.reps + '<span class="unit">回</span>';
+}
+
+function renderHistory() {
+  const listEl = document.getElementById("historyList");
+  const history = entries.filter(e => e.exercise === selectedExercise)
+    .sort((a, b) => a.date < b.date ? 1 : -1);
+  if (history.length === 0) {
+    listEl.innerHTML = '<div class="empty">まだ記録がありません。上のフォームから記録を追加しましょう。</div>';
+    return;
+  }
+  listEl.innerHTML = "";
+  history.forEach(e => {
+    const row = document.createElement("div");
+    row.className = "row";
+    row.innerHTML = `
+      <div class="row-left">
+        <span class="row-date">${formatDate(e.date)}</span>
+        <span class="row-main">${e.weight}kg × ${e.reps}回</span>
+        <span class="row-sets">${e.sets}セット</span>
+      </div>
+      <div class="row-actions">
+        ${e.isPR ? `<span class="stamp${justAddedId === e.id ? ' pop' : ''}">🏆 PR</span>` : ""}
+        <button class="del-btn" data-id="${e.id}">✕</button>
+      </div>
+    `;
+    row.querySelector(".del-btn").onclick = () => {
+      entries = entries.filter(x => x.id !== e.id);
+      saveEntries();
+      render();
+    };
+    listEl.appendChild(row);
+  });
+}
+
+function render() {
+  renderChips();
+  renderBest();
+  renderHistory();
+}
+
+document.getElementById("dateInput").value = todayStr();
+
+document.getElementById("addExerciseBtn").onclick = () => {
+  const nameInput = document.getElementById("newExerciseName");
+  const name = nameInput.value.trim();
+  if (!name) return;
+  if (!exercises.includes(name)) {
+    exercises.push(name);
+    saveExercises();
+  }
+  selectedExercise = name;
+  nameInput.value = "";
+  document.getElementById("exerciseInputRow").style.display = "none";
+  render();
+};
+document.getElementById("newExerciseName").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("addExerciseBtn").click();
+});
+
+document.getElementById("addBtn").onclick = () => {
+  const errorEl = document.getElementById("errorMsg");
+  const weight = document.getElementById("weightInput").value;
+  const reps = document.getElementById("repsInput").value;
+  const sets = document.getElementById("setsInput").value;
+  const date = document.getElementById("dateInput").value || todayStr();
+
+  if (!weight || !reps) {
+    errorEl.textContent = "重量と回数を入力してください";
+    errorEl.style.display = "block";
+    return;
+  }
+  errorEl.style.display = "none";
+
+  const prevBest = bestEpleyBefore(selectedExercise);
+  const currentEpley = epley(weight, reps);
+  const hasPast = entries.some(e => e.exercise === selectedExercise);
+  const isPR = hasPast && currentEpley > prevBest;
+
+  const entry = {
+    id: Date.now().toString(),
+    exercise: selectedExercise,
+    weight: parseFloat(weight),
+    reps: parseInt(reps, 10),
+    sets: parseInt(sets, 10) || 1,
+    date,
+    isPR
+  };
+  entries.unshift(entry);
+  saveEntries();
+  justAddedId = entry.id;
+  setTimeout(() => { justAddedId = null; }, 1600);
+
+  document.getElementById("weightInput").value = "";
+  document.getElementById("repsInput").value = "";
+
+  render();
+};
+
+render();
+</script>
+</body>
+</html>
